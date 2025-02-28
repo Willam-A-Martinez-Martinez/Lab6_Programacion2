@@ -4,6 +4,8 @@
  */
 package Lab6_Programacion_2;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -20,178 +22,180 @@ import javax.swing.JTextArea;
 public class FuncionesCMD {
 
     private String directorioActual;
-    private Scanner scanner;
-    private FuncionesCMD funciones;
-
     private File myFile = null;
 
-    void setFile(String direccion) {
-        myFile = new File(direccion);
+    public void setFile(String direccion) {
+        System.out.println("Recibido: " + direccion);
+
+        if (direccion == null || direccion.trim().isEmpty()) {
+            System.out.println("Error: Dirección no válida");
+            return;
+        }
+
+        myFile = new File(direccion); // Se asigna la ruta sin importar si existe o no
+        directorioActual = myFile.getAbsolutePath(); // Se guarda la ruta como actual
+        System.out.println("Ruta establecida: " + directorioActual);
     }
 
     public String info() {
-        if (myFile.exists()) {
-            StringBuilder info = new StringBuilder();
-            info.append("\nNombre: ").append(myFile.getName())
-                    .append("\nPath: ").append(myFile.getPath())
-                    .append("\nAbsoluta: ").append(myFile.getAbsolutePath())
-                    .append("\nBytes: ").append(myFile.length())
-                    .append("\nModificado en: ").append(new Date(myFile.lastModified()))
-                    .append("\nPadre: ").append(myFile.getAbsoluteFile().getParentFile().getName());
+        if (myFile != null && myFile.exists()) {
+            try {
+                StringBuilder info = new StringBuilder();
+                info.append("\nNombre: ").append(myFile.getName())
+                        .append("\nPath: ").append(myFile.getPath())
+                        .append("\nAbsoluta: ").append(myFile.getAbsolutePath())
+                        .append("\nBytes: ").append(myFile.length())
+                        .append("\nModificado en: ").append(new Date(myFile.lastModified()))
+                        .append("\nPadre: ").append(myFile.getAbsoluteFile().getParent());
 
-            if (myFile.isFile()) {
-                info.append("\nES FILE");
-            } else if (myFile.isDirectory()) {
-                info.append("\nES FOLDER");
-            }
-
-            return info.toString();
-        } else {
-            return "NO EXISTE!";
-        }
-    }
-
-    boolean crearArchivo() throws IOException {
-        return new File(directorioActual).createNewFile();
-    }
-
-    boolean crearFolder() {
-        return new File(directorioActual).mkdirs();
-    }
-
-    boolean borrar() {
-        return myFile.delete();
-    }
-
-    public String dir() {
-        if (myFile.isDirectory()) {
-            StringBuilder info = new StringBuilder();
-            info.append("Folder: ").append(myFile.getName()).append("\n");
-            int dirs = 0, files = 0, bytes = 0;
-
-            for (File child : myFile.listFiles()) {
-                info.append(new Date(child.lastModified()));
-
-                if (child.isDirectory()) {
-                    info.append("\t<DIR>\t");
-                    dirs++;
+                if (myFile.isFile()) {
+                    info.append("\nES FILE");
+                } else if (myFile.isDirectory()) {
+                    info.append("\nES FOLDER");
                 }
-                if (child.isFile()) {
-                    info.append("\t     \t").append(child.length());
-                    files++;
-                    bytes += child.length();
-                }
-
-                info.append("\t").append(child.getName()).append("\n");
+                return info.toString();
+            } catch (Exception e) {
+                return "Error obteniendo información: " + e.getMessage();
             }
-
-            info.append("(").append(files).append(") files y (").append(dirs).append(") dirs\n");
-            info.append("bytes: ").append(bytes);
-
-            return info.toString();
-        } else {
-            return "Accion no permitida";
         }
+        return "NO EXISTE!";
     }
 
-    private boolean borrarTodoH(int cont) {
-        File[] files = myFile.listFiles();
-
-        if (files == null || cont < 0) {
-            return myFile.delete();
-        }
-
-        if (files[cont].delete()) {
-            return borrarTodoH(cont - 1);
-        }
-
-        return false;
-    }
-
-    boolean borrarTodo() {
-        if (!myFile.exists()) {
+    public boolean crearArchivo() {
+        if (myFile == null) {
+            System.out.println("Error: No se ha especificado un archivo.");
             return false;
         }
 
-        File[] files = myFile.listFiles();
-        if (files == null || files.length == 0) {
-            return myFile.delete();
+        try {
+            if (!myFile.exists()) {  // Solo intentamos crear si no existe
+                return myFile.createNewFile();
+            } else {
+                System.out.println("Error: El archivo ya existe.");
+            }
+        } catch (IOException e) {
+            System.out.println("Error al crear archivo: " + e.getMessage());
+        }
+        return false;
+    }
+
+    public boolean crearFolder() {
+        if (myFile == null) {
+            System.out.println("Error: No se ha especificado una carpeta.");
+            return false;
         }
 
-        return borrarTodoH(files.length - 1) && myFile.delete();
+        if (!myFile.exists()) { // Solo creamos si no existe
+            return myFile.mkdirs();
+        } else {
+            System.out.println("Error: La carpeta ya existe.");
+        }
+        return false;
+    }
+
+    public boolean borrar() {
+        if (myFile == null || !myFile.exists()) {
+            System.out.println("Error: No se ha especificado un archivo o carpeta válida.");
+            return false;
+        }
+
+        return eliminarRecursivo(myFile);
+    }
+
+    private boolean eliminarRecursivo(File file) {
+        if (file.isDirectory()) {
+            File[] archivos = file.listFiles();
+            if (archivos != null) {
+                for (File archivo : archivos) {
+                    eliminarRecursivo(archivo); // Llamada recursiva para borrar contenido
+                }
+            }
+        }
+        return file.delete(); // Elimina el archivo o carpeta vacía
+    }
+
+    public String dir() {
+        if (myFile != null && myFile.isDirectory()) {
+            try {
+                StringBuilder info = new StringBuilder();
+                File[] archivos = myFile.listFiles();
+                if (archivos != null) {
+                    int dirs = 0, files = 0;
+                    long bytes = 0;
+                    for (File child : archivos) {
+                        info.append(new Date(child.lastModified()));
+                        if (child.isDirectory()) {
+                            info.append("\t<DIR>\t");
+                            dirs++;
+                        } else {
+                            info.append("\t     \t").append(child.length());
+                            files++;
+                            bytes += child.length();
+                        }
+                        info.append("\t").append(child.getName()).append("\n");
+                    }
+                    info.append("(").append(files).append(") files y (").append(dirs).append(") dirs\n");
+                    info.append("bytes: ").append(bytes);
+                }
+                return info.toString();
+            } catch (Exception e) {
+                return "Error al listar directorio: " + e.getMessage();
+            }
+        }
+        return "Acción no permitida";
     }
 
     public String escribir(String direccion, String texto) {
-        String mensaje = "";
-        try {
-            FileWriter xd = new FileWriter(direccion, true);
-            xd.write(texto + "\n");
-            xd.close();
-            mensaje = "TEXTO INGRESADO DE FORMA CORRECTA";
+        if (direccion == null || direccion.trim().isEmpty()) {
+            return "ERROR: Dirección del archivo no válida.";
+        }
+
+        File archivo = new File(direccion);
+
+        try (FileWriter writer = new FileWriter(archivo, true); BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
+
+            bufferedWriter.write(texto);
+            bufferedWriter.newLine();  // Añade un salto de línea después del texto
+            bufferedWriter.flush();     // Asegura que los datos se guarden
+
+            return "TEXTO INGRESADO DE FORMA CORRECTA";
         } catch (IOException e) {
-            mensaje = "ERROR. NO SE PUDO INGRESAR EL TEXTO";
+            return "ERROR. NO SE PUDO INGRESAR EL TEXTO: " + e.getMessage();
         }
-        return mensaje;
-    }
-
-   
-
-    private static String retrocederRuta(File myFile) {
-        String ruta = myFile.getAbsolutePath();
-        int indice = ruta.lastIndexOf("/");
-
-        if (indice > 0) {
-            String nuevaRuta = ruta.substring(0, indice);
-            if (!nuevaRuta.contains("/")) {
-                return ruta; 
-            }
-            return nuevaRuta;
-        }
-
-        return ruta;
-    }
-
-    public String regresarCarpeta() {
-        setFile(retrocederRuta(myFile));
-        
-        return retrocederRuta(myFile);
-    }
-
-    private void listarDirectorio() {
-        funciones.setFile(directorioActual);
-        funciones.dir();
-    }
-
-    private String obtenerFecha() {
-        System.out.println("Entro a la funcion de obtener fecha");
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        return "\nFecha actual: " + sdf.format(new Date());
-    }
-
-    private String obtenerHora() {
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        return "\nHora actual: " + sdf.format(new Date());
     }
 
     public String imprimirmensaje(String direccion) {
-        String mensaje = "";
-        try {
-            FileReader lector = new FileReader(direccion);
-            int caracter;
-
-            while ((caracter = lector.read()) != -1) {
-                mensaje += (char) caracter;
-            }
-
-            lector.close();
-            mensaje += "\n";
-        } catch (IOException e) {
-            mensaje = "Error al leer el archivo: " + e.getMessage();
+        if (direccion == null || direccion.trim().isEmpty()) {
+            return "ERROR: Dirección del archivo no válida.";
         }
-        return mensaje;
+
+        File archivo = new File(direccion);
+        if (!archivo.exists() || !archivo.isFile()) {
+            return "ERROR: El archivo no existe o no es un archivo válido.";
+        }
+
+        StringBuilder mensaje = new StringBuilder();
+        try (FileReader lector = new FileReader(archivo); BufferedReader br = new BufferedReader(lector)) {
+
+            String linea;
+            while ((linea = br.readLine()) != null) {
+                mensaje.append(linea).append(System.lineSeparator());
+            }
+        } catch (IOException e) {
+            return "Error al leer el archivo: " + e.getMessage();
+        }
+        return mensaje.toString();
     }
 
-    void reconocerComando(String comando, JTextArea a) {
+    public String obtenerFecha() {
+        return "\nFecha actual: " + new SimpleDateFormat("dd/MM/yyyy").format(new Date());
+    }
+
+    public String obtenerHora() {
+        return "\nHora actual: " + new SimpleDateFormat("HH:mm:ss").format(new Date());
+    }
+
+    public void reconocerComando(String comando, JTextArea a) {
         String texto = a.getText();
         String[] lineas = texto.split("\\n");
 
@@ -203,67 +207,50 @@ public class FuncionesCMD {
 
             switch (cmd) {
                 case "Mkdir":
-                    if (crearFolder()) {
-                        a.setText(a.getText() + "\nSe creó la carpeta en " + directorioActual);
-                    } else {
-                        a.setText(a.getText() + "\nError al crear la carpeta");
-                    }
+                    setFile(argumento);
+                    a.append(crearFolder() ? "\nSe creó la carpeta" : "\nError al crear la carpeta");
                     break;
                 case "Mfile":
-                    try {
-                        if (crearArchivo()) {
-                            a.setText(a.getText() + "\nSe creó el archivo en " + directorioActual);
-                        } else {
-                            a.setText(a.getText() + "\nError al crear el archivo");
-                        }
-                    } catch (IOException e) {
-                        a.setText(a.getText() + "\nError: " + e.getMessage());
-                    }
+                    setFile(argumento);
+                    a.append(crearArchivo() ? "\nSe creó el archivo" : "\nError al crear el archivo");
                     break;
                 case "Rm":
                     setFile(argumento);
-                    if (borrar()) {
-                        a.setText(a.getText() + "\nArchivo o carpeta eliminados");
-                    } else {
-                        a.setText(a.getText() + "\nError al eliminar");
-                    }
+                    a.append(borrar() ? "\nArchivo o carpeta eliminados" : "\nError al eliminar");
                     break;
                 case "Cd":
                     setFile(argumento);
-                    directorioActual = myFile.getAbsolutePath();
-                    a.setText(a.getText() + "\nDirectorio cambiado a: " + directorioActual);
+                    directorioActual = myFile.getAbsolutePath(); // Se guarda la ruta sin validar si existe
+                    a.append("\nDirectorio cambiado a: " + directorioActual);
                     break;
-                case "...":
-                    String nuevaRuta = regresarCarpeta();
-                    directorioActual = nuevaRuta;
-                    a.setText(a.getText() + "\nDirectorio cambiado a: " + nuevaRuta);
-                    break;
+
                 case "Dir":
-                    setFile(directorioActual);
-                    a.setText(a.getText() + "\n" + dir());
+                    a.append("\n" + dir());
                     break;
                 case "Date":
-                    a.setText(a.getText() + obtenerFecha());
+                    a.append(obtenerFecha());
                     break;
                 case "Time":
-                    a.setText(a.getText() + obtenerHora());
+                    a.append(obtenerHora());
                     break;
                 case "wr":
                     String[] wrParts = argumento.split(" ", 2);
-                    if (wrParts.length == 2) {
-                        a.setText(a.getText() + "\n" + escribir(wrParts[0], wrParts[1]));
+
+                    if (wrParts.length < 2) {
+                        a.append("\nError: Debe proporcionar archivo y texto.");
                     } else {
-                        a.setText(a.getText() + "\nError: Debe proporcionar archivo y texto");
+                        String archivo = wrParts[0].trim();  // Aseguramos que no tenga espacios extra
+                        String textoo = wrParts[1];  // Tomamos todo el texto después del primer espacio
+                        a.append("\n" + escribir(archivo, textoo));
                     }
                     break;
                 case "rd":
-                    a.setText(a.getText() + "\n" + imprimirmensaje(argumento));
+                    a.append("\n" + imprimirmensaje(argumento));
                     break;
                 default:
-                    a.setText(a.getText() + "\nComando no reconocido");
+                    a.append("\nComando no reconocido");
                     break;
             }
         }
     }
-
 }
