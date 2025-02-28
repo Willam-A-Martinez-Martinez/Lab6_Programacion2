@@ -5,6 +5,8 @@
 package Lab6_Programacion_2;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
 
@@ -13,68 +15,70 @@ import java.util.Date;
  * @author DELL
  */
 public class FuncionesCMD {
+
     private File myFile = null;
-    
-    void setFile(String direccion){
+
+    void setFile(String direccion) {
         myFile = new File(direccion);
     }
-    
-    void info(){
-        if(myFile.exists()){
-            System.out.println("\nNombre: "+myFile.getName());
-            System.out.println("Path: "+myFile.getPath());
-            System.out.println("Absoluta: "+myFile.getAbsolutePath());
-            System.out.println("Bytes: "+myFile.length());
-            System.out.println("Modificado en: "+new Date(myFile.lastModified()));
-            System.out.println("Padre: "+myFile.getAbsoluteFile().getParentFile().getName());
-            if(myFile.isFile())
+
+    void info() {
+        if (myFile.exists()) {
+            System.out.println("\nNombre: " + myFile.getName());
+            System.out.println("Path: " + myFile.getPath());
+            System.out.println("Absoluta: " + myFile.getAbsolutePath());
+            System.out.println("Bytes: " + myFile.length());
+            System.out.println("Modificado en: " + new Date(myFile.lastModified()));
+            System.out.println("Padre: " + myFile.getAbsoluteFile().getParentFile().getName());
+            if (myFile.isFile()) {
                 System.out.println("ES FILE");
-            else if(myFile.isDirectory())
+            } else if (myFile.isDirectory()) {
                 System.out.println("ES FOLDER");
-        }else {
+            }
+        } else {
             System.out.println("NO EXISTE!");
         }
     }
-    
-    boolean crearArchivo()throws IOException{
+
+    boolean crearArchivo() throws IOException {
         return myFile.mkdirs();
     }
-    
-    boolean crearFolder(){
+
+    boolean crearFolder() {
         return myFile.mkdirs();
     }
-    
-    boolean borrar(){
+
+    boolean borrar() {
         return myFile.delete();
     }
-    
-    void dir(){
-        if(myFile.isDirectory()){
-            System.out.println("Folder: "+myFile.getName());
-            int dirs=0, files=0, bytes=0;
-            
-            for(File child: myFile.listFiles()){
+
+    void dir() {
+        if (myFile.isDirectory()) {
+            System.out.println("Folder: " + myFile.getName());
+            int dirs = 0, files = 0, bytes = 0;
+
+            for (File child : myFile.listFiles()) {
                 System.out.print(new Date(child.lastModified()));
-                if(child.isDirectory()){
+                if (child.isDirectory()) {
                     System.out.print("\t<DIR>\t");
                     dirs++;
-                }if(child.isFile()){
+                }
+                if (child.isFile()) {
                     System.out.print("\t     \t");
                     System.out.print(child.length());
                     files++;
-                    bytes+=child.length();
+                    bytes += child.length();
                 }
-                
-                System.out.println("\t"+child.getName());
+
+                System.out.println("\t" + child.getName());
             }
-            System.out.println("("+files+") files y ("+dirs+") dirs");
-            System.out.println("bytes: "+bytes);
-        }
-        else{
+            System.out.println("(" + files + ") files y (" + dirs + ") dirs");
+            System.out.println("bytes: " + bytes);
+        } else {
             System.out.println("Accion no permitida");
         }
     }
-    
+
     private boolean borrarTodoH(int cont) {
         File[] files = myFile.listFiles();
 
@@ -101,6 +105,36 @@ public class FuncionesCMD {
 
         return borrarTodoH(files.length - 1) && myFile.delete();
     }
-    
-    void 
+
+    public String escribir(String direccion, String texto) {
+        String mensaje = "";
+        try {
+            FileWriter xd = new FileWriter(direccion, true); 
+            xd.write(texto + "\n"); 
+            xd.close();
+            mensaje = "TEXTO INGRESADO DE FORMA CORRECTA";
+        } catch (IOException e) {
+            mensaje = "ERROR. NO SE PUDO INGRESAR EL TEXTO";
+        }
+        return mensaje;
+    }
+
+    public String imprimirmensaje(String direccion) {
+        String mensaje = "";
+        try {
+            FileReader lector = new FileReader(direccion);
+            int caracter;
+
+            while ((caracter = lector.read()) != -1) {
+                mensaje += (char) caracter;
+            }
+
+            lector.close();
+            mensaje += "\n";
+        } catch (IOException e) {
+            mensaje = "Error al leer el archivo: " + e.getMessage();
+        }
+        return mensaje;
+    }
+
 }
