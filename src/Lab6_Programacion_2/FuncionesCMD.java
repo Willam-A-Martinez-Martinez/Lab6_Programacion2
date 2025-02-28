@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
+import javax.swing.JTextArea;
 
 /**
  *
@@ -51,11 +52,11 @@ public class FuncionesCMD {
     }
 
     boolean crearArchivo() throws IOException {
-        return myFile.mkdirs();
+        return new File(directorioActual).createNewFile();
     }
 
     boolean crearFolder() {
-        return myFile.mkdirs();
+        return new File(directorioActual).mkdirs();
     }
 
     boolean borrar() {
@@ -162,13 +163,14 @@ public class FuncionesCMD {
     }
 
     private String obtenerFecha() {
+        System.out.println("Entro a la funcion de obtener fecha");
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        return "Fecha actual: " + sdf.format(new Date());
+        return "\nFecha actual: " + sdf.format(new Date());
     }
 
     private String obtenerHora() {
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        return "Hora actual: " + sdf.format(new Date());
+        return "\nHora actual: " + sdf.format(new Date());
     }
 
     public String imprimirmensaje(String direccion) {
@@ -187,6 +189,81 @@ public class FuncionesCMD {
             mensaje = "Error al leer el archivo: " + e.getMessage();
         }
         return mensaje;
+    }
+
+    void reconocerComando(String comando, JTextArea a) {
+        String texto = a.getText();
+        String[] lineas = texto.split("\\n");
+
+        if (lineas.length > 2) {
+            String penultimaLinea = lineas[lineas.length - 1];
+            String[] partes = penultimaLinea.split(" ", 2);
+            String cmd = partes[0];
+            String argumento = partes.length > 1 ? partes[1] : "";
+
+            switch (cmd) {
+                case "Mkdir":
+                    if (crearFolder()) {
+                        a.setText(a.getText() + "\nSe creó la carpeta en " + directorioActual);
+                    } else {
+                        a.setText(a.getText() + "\nError al crear la carpeta");
+                    }
+                    break;
+                case "Mfile":
+                    try {
+                        if (crearArchivo()) {
+                            a.setText(a.getText() + "\nSe creó el archivo en " + directorioActual);
+                        } else {
+                            a.setText(a.getText() + "\nError al crear el archivo");
+                        }
+                    } catch (IOException e) {
+                        a.setText(a.getText() + "\nError: " + e.getMessage());
+                    }
+                    break;
+                case "Rm":
+                    setFile(argumento);
+                    if (borrar()) {
+                        a.setText(a.getText() + "\nArchivo o carpeta eliminados");
+                    } else {
+                        a.setText(a.getText() + "\nError al eliminar");
+                    }
+                    break;
+                case "Cd":
+                    setFile(argumento);
+                    directorioActual = myFile.getAbsolutePath();
+                    a.setText(a.getText() + "\nDirectorio cambiado a: " + directorioActual);
+                    break;
+                case "...":
+                    String nuevaRuta = regresarCarpeta();
+                    directorioActual = nuevaRuta;
+                    a.setText(a.getText() + "\nDirectorio cambiado a: " + nuevaRuta);
+                    break;
+                case "Dir":
+                    setFile(directorioActual);
+                    a.setText(a.getText() + "\n" + dir());
+                    break;
+                case "Date":
+                    a.setText(a.getText() + obtenerFecha());
+                    break;
+                case "Time":
+                    a.setText(a.getText() + obtenerHora());
+                    break;
+                case "wr":
+                    String[] wrParts = argumento.split(" ", 2);
+                    if (wrParts.length == 2) {
+                        a.setText(a.getText() + "\n" + escribir(wrParts[0], wrParts[1]));
+                    } else {
+                        a.setText(a.getText() + "\nError: Debe proporcionar archivo y texto");
+                    }
+                    break;
+                case "rd":
+                    a.setText(a.getText() + "\n" + imprimirmensaje(argumento));
+                    break;
+                default:
+                    a.setText(a.getText() + "\nComando no reconocido");
+                    break;
+            }
+        }
     }
 
 }
