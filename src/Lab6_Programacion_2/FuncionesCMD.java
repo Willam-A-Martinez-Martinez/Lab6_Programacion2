@@ -24,6 +24,12 @@ public class FuncionesCMD {
     private String directorioActual;
     private File myFile = null;
 
+    public String getDirectorioActual() {
+        return directorioActual;
+    }
+
+    
+    
     public void setFile(String direccion) {
         System.out.println("Recibido: " + direccion);
 
@@ -78,7 +84,24 @@ public class FuncionesCMD {
         }
         return false;
     }
+    
+    public void retrocederRuta() {
+        if (myFile == null) {
+            System.out.println("Error: No hay una ruta establecida.");
+            return;
+        }
 
+        File padre = myFile.getParentFile(); // Obtiene el directorio padre
+
+        if (padre != null) {
+            myFile = padre; // Actualiza la referencia a la ruta padre
+            directorioActual = myFile.getAbsolutePath();
+            System.out.println("Ruta actualizada a: " + directorioActual);
+        } else {
+            System.out.println("Error: No se puede retroceder más.");
+        }
+    }
+    
     public boolean crearFolder() {
         if (myFile == null) {
             System.out.println("Error: No se ha especificado una carpeta.");
@@ -196,61 +219,68 @@ public class FuncionesCMD {
     }
 
     public void reconocerComando(String comando, JTextArea a) {
-        String texto = a.getText();
-        String[] lineas = texto.split("\\n");
+        if (comando == null || comando.trim().isEmpty()) {
+            a.append("\nError: Comando vacío o inválido.");
+            return;
+        }
 
-        if (lineas.length > 2) {
-            String penultimaLinea = lineas[lineas.length - 1];
-            String[] partes = penultimaLinea.split(" ", 2);
-            String cmd = partes[0];
-            String argumento = partes.length > 1 ? partes[1] : "";
+        String[] partes = comando.split(" ", 2);
+        String cmd = partes[0];
+        String argumento = partes.length > 1 ? partes[1] : "";
 
-            switch (cmd) {
-                case "Mkdir":
-                    setFile(argumento);
-                    a.append(crearFolder() ? "\nSe creó la carpeta" : "\nError al crear la carpeta");
-                    break;
-                case "Mfile":
-                    setFile(argumento);
-                    a.append(crearArchivo() ? "\nSe creó el archivo" : "\nError al crear el archivo");
-                    break;
-                case "Rm":
-                    setFile(argumento);
-                    a.append(borrar() ? "\nArchivo o carpeta eliminados" : "\nError al eliminar");
-                    break;
-                case "Cd":
-                    setFile(argumento);
-                    directorioActual = myFile.getAbsolutePath(); // Se guarda la ruta sin validar si existe
-                    a.append("\nDirectorio cambiado a: " + directorioActual);
-                    break;
-
-                case "Dir":
-                    a.append("\n" + dir());
-                    break;
-                case "Date":
-                    a.append(obtenerFecha());
-                    break;
-                case "Time":
-                    a.append(obtenerHora());
-                    break;
-                case "wr":
-                    String[] wrParts = argumento.split(" ", 2);
-
-                    if (wrParts.length < 2) {
-                        a.append("\nError: Debe proporcionar archivo y texto.");
+        switch (cmd) {
+            case "Mkdir":
+                setFile(argumento);
+                a.append(crearFolder() ? "\nSe creó la carpeta" : "\nError al crear la carpeta");
+                break;
+            case "Mfile":
+                setFile(argumento);
+                a.append(crearArchivo() ? "\nSe creó el archivo" : "\nError al crear el archivo");
+                break;
+            case "Rm":
+                setFile(argumento);
+                a.append(borrar() ? "\nArchivo o carpeta eliminados" : "\nError al eliminar");
+                break;
+            case "Cd":
+                setFile(argumento);
+                directorioActual = myFile.getAbsolutePath(); // Se guarda la ruta sin validar si existe
+                a.append("\nDirectorio cambiado a: " + directorioActual);
+                break;
+            case "Dir":
+                a.append("\n" + dir());
+                break;
+            case "Date":
+                a.append(obtenerFecha());
+                break;
+            case "Time":
+                a.append(obtenerHora());
+                break;
+            case "wr":
+                if (myFile == null || !myFile.exists() || myFile.isDirectory()) {
+                    a.append("\nError: No hay un archivo válido seleccionado. Use 'Cd' para elegir uno.");
+                } else {
+                    String textoAEscribir = argumento.trim();
+                    if (textoAEscribir.isEmpty()) {
+                        a.append("\nError: Debe proporcionar texto para escribir en el archivo.");
                     } else {
-                        String archivo = wrParts[0].trim();  // Aseguramos que no tenga espacios extra
-                        String textoo = wrParts[1];  // Tomamos todo el texto después del primer espacio
-                        a.append("\n" + escribir(archivo, textoo));
+                        a.append("\n" + escribir(myFile.getAbsolutePath(), textoAEscribir));
                     }
-                    break;
-                case "rd":
-                    a.append("\n" + imprimirmensaje(argumento));
-                    break;
-                default:
-                    a.append("\nComando no reconocido");
-                    break;
-            }
+                }
+                break;
+            case "rd":
+                if (myFile == null || !myFile.exists() || myFile.isDirectory()) {
+                    a.append("\nError: No hay un archivo válido seleccionado. Use 'Cd' para elegir uno.");
+                } else {
+                    a.append("\n" + imprimirmensaje(myFile.getAbsolutePath()));
+                }
+                break;
+            case "...":
+                retrocederRuta();
+                a.append("\nRuta retrocedida a: " + directorioActual);
+                break;
+            default:
+                a.append("\nComando no reconocido");
+                break;
         }
     }
 }
