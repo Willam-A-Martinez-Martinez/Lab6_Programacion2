@@ -10,12 +10,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Scanner;
 
 /**
  *
  * @author DELL
  */
 public class FuncionesCMD {
+    private String directorioActual;
+    private Scanner scanner;
+    private FuncionesCMD funciones;
 
     private File myFile = null;
 
