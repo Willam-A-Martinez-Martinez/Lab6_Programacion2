@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -118,6 +119,38 @@ public class FuncionesCMD {
         }
         return mensaje;
     }
+    
+      private void regresarCarpeta() {
+        try {
+            File dirActual = new File(directorioActual);
+            File dirPadre = dirActual.getParentFile();
+            
+            if (dirPadre != null) {
+                directorioActual = dirPadre.getCanonicalPath();
+                funciones.setFile(directorioActual);
+            } else {
+                System.out.println("Ya estás en el directorio raíz.");
+            }
+        } catch (IOException e) {
+            System.out.println("Error al regresar de carpeta: " + e.getMessage());
+        }
+    }
+
+    private void listarDirectorio() {
+        funciones.setFile(directorioActual);
+        funciones.dir();
+    }
+
+    private void mostrarFecha() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        System.out.println("Fecha actual: " + sdf.format(new Date()));
+    }
+
+    private void mostrarHora() {
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        System.out.println("Hora actual: " + sdf.format(new Date()));
+    }
+    
 
     public String imprimirmensaje(String direccion) {
         String mensaje = "";
