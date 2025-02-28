@@ -17,6 +17,7 @@ import java.util.Scanner;
  * @author DELL
  */
 public class FuncionesCMD {
+
     private String directorioActual;
     private Scanner scanner;
     private FuncionesCMD funciones;
@@ -27,21 +28,25 @@ public class FuncionesCMD {
         myFile = new File(direccion);
     }
 
-    void info() {
+    public String info() {
         if (myFile.exists()) {
-            System.out.println("\nNombre: " + myFile.getName());
-            System.out.println("Path: " + myFile.getPath());
-            System.out.println("Absoluta: " + myFile.getAbsolutePath());
-            System.out.println("Bytes: " + myFile.length());
-            System.out.println("Modificado en: " + new Date(myFile.lastModified()));
-            System.out.println("Padre: " + myFile.getAbsoluteFile().getParentFile().getName());
+            StringBuilder info = new StringBuilder();
+            info.append("\nNombre: ").append(myFile.getName())
+                    .append("\nPath: ").append(myFile.getPath())
+                    .append("\nAbsoluta: ").append(myFile.getAbsolutePath())
+                    .append("\nBytes: ").append(myFile.length())
+                    .append("\nModificado en: ").append(new Date(myFile.lastModified()))
+                    .append("\nPadre: ").append(myFile.getAbsoluteFile().getParentFile().getName());
+
             if (myFile.isFile()) {
-                System.out.println("ES FILE");
+                info.append("\nES FILE");
             } else if (myFile.isDirectory()) {
-                System.out.println("ES FOLDER");
+                info.append("\nES FOLDER");
             }
+
+            return info.toString();
         } else {
-            System.out.println("NO EXISTE!");
+            return "NO EXISTE!";
         }
     }
 
@@ -57,30 +62,34 @@ public class FuncionesCMD {
         return myFile.delete();
     }
 
-    void dir() {
+    public String dir() {
         if (myFile.isDirectory()) {
-            System.out.println("Folder: " + myFile.getName());
+            StringBuilder info = new StringBuilder();
+            info.append("Folder: ").append(myFile.getName()).append("\n");
             int dirs = 0, files = 0, bytes = 0;
 
             for (File child : myFile.listFiles()) {
-                System.out.print(new Date(child.lastModified()));
+                info.append(new Date(child.lastModified()));
+
                 if (child.isDirectory()) {
-                    System.out.print("\t<DIR>\t");
+                    info.append("\t<DIR>\t");
                     dirs++;
                 }
                 if (child.isFile()) {
-                    System.out.print("\t     \t");
-                    System.out.print(child.length());
+                    info.append("\t     \t").append(child.length());
                     files++;
                     bytes += child.length();
                 }
 
-                System.out.println("\t" + child.getName());
+                info.append("\t").append(child.getName()).append("\n");
             }
-            System.out.println("(" + files + ") files y (" + dirs + ") dirs");
-            System.out.println("bytes: " + bytes);
+
+            info.append("(").append(files).append(") files y (").append(dirs).append(") dirs\n");
+            info.append("bytes: ").append(bytes);
+
+            return info.toString();
         } else {
-            System.out.println("Accion no permitida");
+            return "Accion no permitida";
         }
     }
 
@@ -114,8 +123,8 @@ public class FuncionesCMD {
     public String escribir(String direccion, String texto) {
         String mensaje = "";
         try {
-            FileWriter xd = new FileWriter(direccion, true); 
-            xd.write(texto + "\n"); 
+            FileWriter xd = new FileWriter(direccion, true);
+            xd.write(texto + "\n");
             xd.close();
             mensaje = "TEXTO INGRESADO DE FORMA CORRECTA";
         } catch (IOException e) {
@@ -123,21 +132,28 @@ public class FuncionesCMD {
         }
         return mensaje;
     }
-    
-      private void regresarCarpeta() {
-        try {
-            File dirActual = new File(directorioActual);
-            File dirPadre = dirActual.getParentFile();
-            
-            if (dirPadre != null) {
-                directorioActual = dirPadre.getCanonicalPath();
-                funciones.setFile(directorioActual);
-            } else {
-                System.out.println("Ya estás en el directorio raíz.");
+
+   
+
+    private static String retrocederRuta(File myFile) {
+        String ruta = myFile.getAbsolutePath();
+        int indice = ruta.lastIndexOf("/");
+
+        if (indice > 0) {
+            String nuevaRuta = ruta.substring(0, indice);
+            if (!nuevaRuta.contains("/")) {
+                return ruta; 
             }
-        } catch (IOException e) {
-            System.out.println("Error al regresar de carpeta: " + e.getMessage());
+            return nuevaRuta;
         }
+
+        return ruta;
+    }
+
+    public String regresarCarpeta() {
+        setFile(retrocederRuta(myFile));
+        
+        return retrocederRuta(myFile);
     }
 
     private void listarDirectorio() {
@@ -145,16 +161,15 @@ public class FuncionesCMD {
         funciones.dir();
     }
 
-    private void mostrarFecha() {
+    private String obtenerFecha() {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        System.out.println("Fecha actual: " + sdf.format(new Date()));
+        return "Fecha actual: " + sdf.format(new Date());
     }
 
-    private void mostrarHora() {
+    private String obtenerHora() {
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-        System.out.println("Hora actual: " + sdf.format(new Date()));
+        return "Hora actual: " + sdf.format(new Date());
     }
-    
 
     public String imprimirmensaje(String direccion) {
         String mensaje = "";
